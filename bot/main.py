@@ -13,15 +13,16 @@ async def main():
 
     django.setup()
 
-    from handlers.routing import get_main_router
     from core import config
+    from middlewares.throttling import rate_limit_middleware
+    from handlers.routing import get_main_router
 
     bot = Bot(token=config.BOT_TOKEN, default=DefaultBotProperties())
-
     dp = Dispatcher()
-    dp.include_router(get_main_router())
-
+    
     try:
+        dp.message.middleware(rate_limit_middleware)
+        dp.include_router(get_main_router())
         await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
     finally:
         await bot.session.close()
